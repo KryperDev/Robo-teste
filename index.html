@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Runner V100 — Login Automático Deriv</title>
+  <title>Runner V100 — Nova Aba Deriv</title>
   <style>
     :root {
       --bg: #0f1117;
@@ -75,10 +75,18 @@
     }
     .badge-demo { background: rgba(16, 185, 129, 0.2); color: var(--demo); }
     .badge-real { background: rgba(239, 68, 68, 0.2); color: var(--real); }
+    .done-banner {
+      display: none; background: rgba(16, 185, 129, 0.14); border: 1px solid var(--demo);
+      color: #a7f3d0; padding: 14px 16px; border-radius: 10px; font-size: 14px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="done-banner" id="oauthDoneBanner">
+      <strong>Autorização concluída nesta nova aba!</strong> Suas contas foram enviadas para o painel do robô. Você já pode fechar esta aba e voltar para a aba anterior.
+    </div>
+
     <div class="header">
       <div>
         <strong>Runner V100 / V25 — Painel Web</strong>
@@ -90,7 +98,7 @@
           <span style="font-size: 11px; color: var(--muted);">Saldo Atual</span>
           <div style="font-weight: 700; font-size: 16px;" id="balanceDisplay">--</div>
         </div>
-        <button class="btn-oauth" id="btnLoginDeriv" onclick="loginWithDeriv()">Entrar com Deriv</button>
+        <button class="btn-oauth" id="btnLoginDeriv" onclick="loginWithDerivNewTab()">Entrar com Deriv</button>
         <button class="btn-logout" id="btnLogout" onclick="logoutDeriv()" style="display:none;">Sair</button>
       </div>
     </div>
@@ -101,9 +109,9 @@
 
     <div class="grid">
       <div class="card">
-        <h3>1. Conta Conectada (Auto OAuth)</h3>
+        <h3>1. Conta Conectada (Nova Aba OAuth)</h3>
         <label>App ID Registrado na Deriv</label>
-        <input type="text" id="appId" value="SEU_APP_ID" placeholder="Ex: 64123" />
+        <input type="text" id="appId" value="" placeholder="Ex: 64123" />
 
         <label>Selecionar Conta (Demo ou Real)</label>
         <select id="accountSelect" onchange="onAccountChange()" disabled>
@@ -113,7 +121,7 @@
         <div id="accountBadgeBox" style="margin-bottom: 12px;"></div>
 
         <details style="font-size: 12px; color: var(--muted); margin-top: 8px;">
-          <summary style="cursor:pointer;">Ou conectar via token manual (opcional)</summary>
+          <summary style="cursor:pointer;">Ou conectar via token manual</summary>
           <div style="margin-top: 10px;">
             <input type="password" id="manualToken" placeholder="Cole token manual aqui..." />
             <button class="btn" style="background: var(--accent); color:#fff; padding:8px;" onclick="connectManualToken()">Conectar Token</button>
@@ -192,7 +200,7 @@
         <div class="stat-box"><span>Próxima Stake</span><strong id="statNextStake">0.35</strong></div>
       </div>
 
-      <div class="log-box" id="logBox">Pronto. Clique em "Entrar com Deriv" para carregar suas contas automaticamente.</div>
+      <div class="log-box" id="logBox">Pronto. Informe seu App ID e clique em "Entrar com Deriv" para abrir o login em nova aba.</div>
 
       <div style="overflow-x:auto; margin-top: 12px;">
         <table>
@@ -214,8 +222,9 @@
   </div>
 
   <script>
+    const authChannel = new BroadcastChannel('deriv_oauth_channel');
     let ws = null;
-    let accounts = []; // [{ acct, token, cur, isVirtual }]
+    let accounts = [];
     let currentAccount = null;
     let isRunning = false;
     let inTrade = false;
@@ -230,19 +239,52 @@
       box.innerHTML = `[${time}] ${msg}<br>` + box.innerHTML;
     }
 
-    // 1. Redireciona para o login oficial OAuth da Deriv
-    function loginWithDeriv() {
-      const appId = document.getElementById('appId').value.trim();
-      if (!appId || appId === 'SEU_APP_ID') {
-        alert('Cadastre seu App ID gratuito em developers.deriv.com apontando para a URL deste site e informe o número no campo App ID.');
-        return;
-      }
-      localStorage.setItem('deriv_custom_app_id', appId);
-      window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(appId)}&l=PT&brand=deriv`;
+    function applyReceivedAccounts(receivedAccounts) {
+      if (!Array.isArray(receivedAccounts) || !receivedAccounts.length) return;
+      accounts = receivedAccounts;
+      sessionStorage.setItem('deriv_oauth_accounts', JSON.stringify(accounts));
+      log('Contas recebidas da nova aba com sucesso!');
+      populateAccountSelector();
     }
 
-    // 2. Captura retorno automático do OAuth na URL (acct1, token1, cur1, acct2, token2...)
-    function parseOAuthCallback() {
+    // Abre a autorização da Deriv em uma NOVA ABA ('_blank')
+    function loginWithDerivNewTab() {
+      if (window.location.protocol === 'file:') {
+        alert('O login OAuth da Deriv exige URL HTTP/HTTPS (como GitHub Pages) cadastrada em developers.deriv.com.');
+        return;
+      }
+
+      const appId = document.getElementById('appId').value.trim();
+      if (!appId) {
+        alert('Informe o seu App ID numérico registrado em developers.deriv.com.');
+        return;
+      }
+
+      localStorage.setItem('deriv_custom_app_id', appId);
+      const oauthUrl = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(appId)}&l=PT&brand=deriv`;
+      const newTab = window.open(oauthUrl, '_blank');
+
+      if (!newTab) {
+        alert('O navegador bloqueou a abertura da nova aba. Permita popups/novas abas para este site.');
+      } else {
+        log('Nova aba aberta para login na Deriv. Conclua a autorização lá...');
+      }
+    }
+
+    authChannel.onmessage = (event) => {
+      if (event.data && event.data.type === 'DERIV_OAUTH_SUCCESS') {
+        applyReceivedAccounts(event.data.accounts);
+      }
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data && event.data.type === 'DERIV_OAUTH_SUCCESS') {
+        applyReceivedAccounts(event.data.accounts);
+      }
+    });
+
+    function handleOAuthReturn() {
       const savedAppId = localStorage.getItem('deriv_custom_app_id');
       if (savedAppId) document.getElementById('appId').value = savedAppId;
 
@@ -259,9 +301,19 @@
       }
 
       if (parsed.length > 0) {
-        // Limpa tokens da URL imediatamente por segurança
         window.history.replaceState({}, document.title, window.location.pathname);
+        authChannel.postMessage({ type: 'DERIV_OAUTH_SUCCESS', accounts: parsed });
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({ type: 'DERIV_OAUTH_SUCCESS', accounts: parsed }, window.location.origin);
+        }
         sessionStorage.setItem('deriv_oauth_accounts', JSON.stringify(parsed));
+
+        // Tenta fechar a nova aba automaticamente; se o navegador impedir, exibe o aviso
+        setTimeout(() => {
+          window.close();
+          document.getElementById('oauthDoneBanner').style.display = 'block';
+        }, 250);
+        return;
       }
 
       const stored = sessionStorage.getItem('deriv_oauth_accounts');
@@ -274,7 +326,6 @@
     function populateAccountSelector() {
       const select = document.getElementById('accountSelect');
       select.innerHTML = '';
-      // Coloca conta DEMO primeiro por segurança
       accounts.sort((a, b) => Number(b.isVirtual) - Number(a.isVirtual));
 
       accounts.forEach((acc, idx) => {
@@ -308,8 +359,7 @@
     }
 
     function connectSocketWithToken(token) {
-      let appId = document.getElementById('appId').value.trim();
-      if (!appId || appId === 'SEU_APP_ID') appId = '1089';
+      const appId = document.getElementById('appId').value.trim() || '1089';
 
       if (ws) ws.close();
       ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${appId}`);
@@ -450,78 +500,3 @@
       const sl = Number(document.getElementById('stopLoss').value);
       const maxStreak = Number(document.getElementById('maxLossStreak').value);
       const cooldown = Number(document.getElementById('cooldownSec').value) * 1000;
-
-      stats.total += 1;
-      stats.pnl = Number((stats.pnl + profit).toFixed(2));
-
-      if (profit > 0) {
-        stats.wins += 1;
-        stats.lossStreak = 0;
-        if (mgmt === 'soros1' && stats.sorosLevel === 0) {
-          stats.sorosLevel = 1;
-          stats.nextStake = Number((baseStake + profit).toFixed(2));
-        } else {
-          stats.sorosLevel = 0;
-          stats.nextStake = baseStake;
-        }
-      } else {
-        stats.losses += 1;
-        stats.lossStreak += 1;
-        stats.sorosLevel = 0;
-        stats.nextStake = baseStake;
-      }
-
-      const row = {
-        time: new Date().toLocaleTimeString(),
-        acct: currentAccount.acct,
-        symbol: poc.underlying,
-        type: poc.contract_type,
-        stake: Number(poc.buy_price).toFixed(2),
-        profit: profit.toFixed(2),
-        id: poc.contract_id
-      };
-      historyRows.unshift(row);
-      renderHistoryRow(row);
-      updateStatsUI();
-
-      if (stats.pnl >= tp) return stopBot(`Take Profit atingido (+${stats.pnl.toFixed(2)})!`);
-      if (stats.pnl <= -sl) return stopBot(`Stop Loss atingido (${stats.pnl.toFixed(2)}).`);
-      if (stats.lossStreak >= maxStreak) return stopBot(`Trava de ${maxStreak} perdas seguidas acionada.`);
-
-      log(`Resultado: ${profit >= 0 ? '+' : ''}${profit.toFixed(2)}. Próxima leitura em ${cooldown / 1000}s...`);
-      lastTicks = [];
-      cooldownTimer = setTimeout(() => { inTrade = false; }, cooldown);
-    }
-
-    function updateStatsUI() {
-      document.getElementById('statTotal').innerText = stats.total;
-      document.getElementById('statWL').innerText = `${stats.wins} / ${stats.losses}`;
-      const pnlEl = document.getElementById('statPnl');
-      pnlEl.innerText = `${stats.pnl >= 0 ? '+' : ''}${stats.pnl.toFixed(2)}`;
-      pnlEl.className = stats.pnl >= 0 ? 'pos' : 'neg';
-      document.getElementById('statNextStake').innerText = stats.nextStake.toFixed(2);
-    }
-
-    function renderHistoryRow(r) {
-      const tbody = document.getElementById('historyBody');
-      const tr = document.createElement('tr');
-      const cls = Number(r.profit) >= 0 ? 'pos' : 'neg';
-      tr.innerHTML = `<td>${r.time}</td><td>${r.acct}</td><td>${r.symbol}</td><td>${r.type}</td><td>${r.stake}</td><td class="${cls}">${Number(r.profit) >= 0 ? '+' : ''}${r.profit}</td><td>${r.id}</td>`;
-      tbody.prepend(tr);
-    }
-
-    function exportCSV() {
-      if (!historyRows.length) return;
-      const header = 'Hora,Conta,Ativo,Tipo,Stake,Lucro,Contrato\n';
-      const csv = header + historyRows.map(r => `${r.time},${r.acct},${r.symbol},${r.type},${r.stake},${r.profit},${r.id}`).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `sessao_${currentAccount?.acct || 'deriv'}_${Date.now()}.csv`;
-      link.click();
-    }
-
-    window.addEventListener('DOMContentLoaded', parseOAuthCallback);
-  </script>
-</body>
-</html>
