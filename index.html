@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:," />
   <title>Runner V100 — Nova Aba Deriv</title>
   <style>
     :root {
@@ -37,6 +38,10 @@
     .real-warning {
       display: none; background: rgba(239, 68, 68, 0.14); border: 1px solid var(--real);
       color: #fca5a5; padding: 12px 16px; border-radius: 10px; font-size: 14px;
+    }
+    .done-banner {
+      display: none; background: rgba(16, 185, 129, 0.14); border: 1px solid var(--demo);
+      color: #a7f3d0; padding: 14px 16px; border-radius: 10px; font-size: 14px;
     }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
     .card {
@@ -75,10 +80,6 @@
     }
     .badge-demo { background: rgba(16, 185, 129, 0.2); color: var(--demo); }
     .badge-real { background: rgba(239, 68, 68, 0.2); color: var(--real); }
-    .done-banner {
-      display: none; background: rgba(16, 185, 129, 0.14); border: 1px solid var(--demo);
-      color: #a7f3d0; padding: 14px 16px; border-radius: 10px; font-size: 14px;
-    }
   </style>
 </head>
 <body>
@@ -98,8 +99,8 @@
           <span style="font-size: 11px; color: var(--muted);">Saldo Atual</span>
           <div style="font-weight: 700; font-size: 16px;" id="balanceDisplay">--</div>
         </div>
-        <button class="btn-oauth" id="btnLoginDeriv" onclick="loginWithDerivNewTab()">Entrar com Deriv</button>
-        <button class="btn-logout" id="btnLogout" onclick="logoutDeriv()" style="display:none;">Sair</button>
+        <button type="button" class="btn-oauth" id="btnLoginDeriv">Entrar com Deriv</button>
+        <button type="button" class="btn-logout" id="btnLogout" style="display:none;">Sair</button>
       </div>
     </div>
 
@@ -110,11 +111,11 @@
     <div class="grid">
       <div class="card">
         <h3>1. Conta Conectada (Nova Aba OAuth)</h3>
-        <label>App ID Registrado na Deriv</label>
+        <label for="appId">App ID Registrado na Deriv (apenas números)</label>
         <input type="text" id="appId" value="" placeholder="Ex: 64123" />
 
-        <label>Selecionar Conta (Demo ou Real)</label>
-        <select id="accountSelect" onchange="onAccountChange()" disabled>
+        <label for="accountSelect">Selecionar Conta (Demo ou Real)</label>
+        <select id="accountSelect" disabled>
           <option value="">Clique em "Entrar com Deriv" acima...</option>
         </select>
 
@@ -124,7 +125,7 @@
           <summary style="cursor:pointer;">Ou conectar via token manual</summary>
           <div style="margin-top: 10px;">
             <input type="password" id="manualToken" placeholder="Cole token manual aqui..." />
-            <button class="btn" style="background: var(--accent); color:#fff; padding:8px;" onclick="connectManualToken()">Conectar Token</button>
+            <button type="button" class="btn" id="btnManualToken" style="background: var(--accent); color:#fff; padding:8px;">Conectar Token</button>
           </div>
         </details>
       </div>
@@ -133,7 +134,7 @@
         <h3>2. Parâmetros do Robô</h3>
         <div class="row-2">
           <div>
-            <label>Índice</label>
+            <label for="symbol">Índice</label>
             <select id="symbol">
               <option value="R_100" selected>Volatility 100 (V100)</option>
               <option value="R_25">Volatility 25 (V25)</option>
@@ -141,18 +142,18 @@
             </select>
           </div>
           <div>
-            <label>Duração (Ticks)</label>
+            <label for="ticks">Duração (Ticks)</label>
             <input type="number" id="ticks" value="5" min="1" max="10" />
           </div>
         </div>
 
         <div class="row-2">
           <div>
-            <label>Stake Inicial (USD)</label>
+            <label for="baseStake">Stake Inicial (USD)</label>
             <input type="number" id="baseStake" value="0.35" step="0.01" min="0.35" />
           </div>
           <div>
-            <label>Gestão de Mão</label>
+            <label for="moneyMgmt">Gestão de Mão</label>
             <select id="moneyMgmt">
               <option value="soros1" selected>Soros Nível 1</option>
               <option value="fixed">Mão Fixa</option>
@@ -162,35 +163,35 @@
 
         <div class="row-2">
           <div>
-            <label>Take Profit Sessão (USD)</label>
+            <label for="takeProfit">Take Profit Sessão (USD)</label>
             <input type="number" id="takeProfit" value="2.00" step="0.10" min="0.35" />
           </div>
           <div>
-            <label>Stop Loss Sessão (USD)</label>
+            <label for="stopLoss">Stop Loss Sessão (USD)</label>
             <input type="number" id="stopLoss" value="2.50" step="0.10" min="0.35" />
           </div>
         </div>
 
         <div class="row-2">
           <div>
-            <label>Trava Perdas Seguidas</label>
+            <label for="maxLossStreak">Trava Perdas Seguidas</label>
             <input type="number" id="maxLossStreak" value="4" min="1" max="15" />
           </div>
           <div>
-            <label>Pausa entre Ordens (seg)</label>
+            <label for="cooldownSec">Pausa entre Ordens (seg)</label>
             <input type="number" id="cooldownSec" value="10" min="1" max="120" />
           </div>
         </div>
 
-        <button class="btn btn-start" id="btnStart" onclick="startBot()" disabled>Iniciar Robô</button>
-        <button class="btn btn-stop" id="btnStop" onclick="stopBot('Parado manualmente.')" disabled>Parar Sessão</button>
+        <button type="button" class="btn btn-start" id="btnStart" disabled>Iniciar Robô</button>
+        <button type="button" class="btn btn-stop" id="btnStop" disabled>Parar Sessão</button>
       </div>
     </div>
 
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <h3 style="margin:0;">3. Painel da Sessão</h3>
-        <button class="btn-logout" onclick="exportCSV()">Exportar CSV</button>
+        <button type="button" class="btn-logout" id="btnExportCsv">Exportar CSV</button>
       </div>
 
       <div class="stats" style="margin-bottom: 14px;">
@@ -200,7 +201,7 @@
         <div class="stat-box"><span>Próxima Stake</span><strong id="statNextStake">0.35</strong></div>
       </div>
 
-      <div class="log-box" id="logBox">Pronto. Informe seu App ID e clique em "Entrar com Deriv" para abrir o login em nova aba.</div>
+      <div class="log-box" id="logBox">Pronto. Informe seu App ID numérico e clique em "Entrar com Deriv" para abrir o login em nova aba.</div>
 
       <div style="overflow-x:auto; margin-top: 12px;">
         <table>
@@ -222,281 +223,365 @@
   </div>
 
   <script>
-    const authChannel = new BroadcastChannel('deriv_oauth_channel');
-    let ws = null;
-    let accounts = [];
-    let currentAccount = null;
-    let isRunning = false;
-    let inTrade = false;
-    let cooldownTimer = null;
-    let lastTicks = [];
-    let stats = { total: 0, wins: 0, losses: 0, pnl: 0, lossStreak: 0, sorosLevel: 0, nextStake: 0.35 };
-    let historyRows = [];
+    (function () {
+      const authChannel = new BroadcastChannel('deriv_oauth_channel');
+      let ws = null;
+      let accounts = [];
+      let currentAccount = null;
+      let isRunning = false;
+      let inTrade = false;
+      let cooldownTimer = null;
+      let lastTicks = [];
+      let stats = { total: 0, wins: 0, losses: 0, pnl: 0, lossStreak: 0, sorosLevel: 0, nextStake: 0.35 };
+      let historyRows = [];
 
-    function log(msg) {
-      const box = document.getElementById('logBox');
-      const time = new Date().toLocaleTimeString();
-      box.innerHTML = `[${time}] ${msg}<br>` + box.innerHTML;
-    }
-
-    function applyReceivedAccounts(receivedAccounts) {
-      if (!Array.isArray(receivedAccounts) || !receivedAccounts.length) return;
-      accounts = receivedAccounts;
-      sessionStorage.setItem('deriv_oauth_accounts', JSON.stringify(accounts));
-      log('Contas recebidas da nova aba com sucesso!');
-      populateAccountSelector();
-    }
-
-    // Abre a autorização da Deriv em uma NOVA ABA ('_blank')
-    function loginWithDerivNewTab() {
-      if (window.location.protocol === 'file:') {
-        alert('O login OAuth da Deriv exige URL HTTP/HTTPS (como GitHub Pages) cadastrada em developers.deriv.com.');
-        return;
+      function log(msg) {
+        const box = document.getElementById('logBox');
+        const time = new Date().toLocaleTimeString();
+        box.innerHTML = `[${time}] ${msg}<br>` + box.innerHTML;
       }
 
-      const appId = document.getElementById('appId').value.trim();
-      if (!appId) {
-        alert('Informe o seu App ID numérico registrado em developers.deriv.com.');
-        return;
-      }
-
-      localStorage.setItem('deriv_custom_app_id', appId);
-      const oauthUrl = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(appId)}&l=PT&brand=deriv`;
-      const newTab = window.open(oauthUrl, '_blank');
-
-      if (!newTab) {
-        alert('O navegador bloqueou a abertura da nova aba. Permita popups/novas abas para este site.');
-      } else {
-        log('Nova aba aberta para login na Deriv. Conclua a autorização lá...');
-      }
-    }
-
-    authChannel.onmessage = (event) => {
-      if (event.data && event.data.type === 'DERIV_OAUTH_SUCCESS') {
-        applyReceivedAccounts(event.data.accounts);
-      }
-    };
-
-    window.addEventListener('message', (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data && event.data.type === 'DERIV_OAUTH_SUCCESS') {
-        applyReceivedAccounts(event.data.accounts);
-      }
-    });
-
-    function handleOAuthReturn() {
-      const savedAppId = localStorage.getItem('deriv_custom_app_id');
-      if (savedAppId) document.getElementById('appId').value = savedAppId;
-
-      const params = new URLSearchParams(window.location.search);
-      const parsed = [];
-      let i = 1;
-      while (params.has(`acct${i}`) && params.has(`token${i}`)) {
-        const acct = params.get(`acct${i}`);
-        const token = params.get(`token${i}`);
-        const cur = params.get(`cur${i}`) || 'USD';
-        const isVirtual = acct.startsWith('VRT');
-        parsed.push({ acct, token, cur, isVirtual });
-        i++;
-      }
-
-      if (parsed.length > 0) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-        authChannel.postMessage({ type: 'DERIV_OAUTH_SUCCESS', accounts: parsed });
-        if (window.opener && !window.opener.closed) {
-          window.opener.postMessage({ type: 'DERIV_OAUTH_SUCCESS', accounts: parsed }, window.location.origin);
-        }
-        sessionStorage.setItem('deriv_oauth_accounts', JSON.stringify(parsed));
-
-        // Tenta fechar a nova aba automaticamente; se o navegador impedir, exibe o aviso
-        setTimeout(() => {
-          window.close();
-          document.getElementById('oauthDoneBanner').style.display = 'block';
-        }, 250);
-        return;
-      }
-
-      const stored = sessionStorage.getItem('deriv_oauth_accounts');
-      if (stored) {
-        accounts = JSON.parse(stored);
+      function applyReceivedAccounts(receivedAccounts) {
+        if (!Array.isArray(receivedAccounts) || !receivedAccounts.length) return;
+        accounts = receivedAccounts;
+        sessionStorage.setItem('deriv_oauth_accounts', JSON.stringify(accounts));
+        log('Contas recebidas da nova aba com sucesso!');
         populateAccountSelector();
       }
-    }
 
-    function populateAccountSelector() {
-      const select = document.getElementById('accountSelect');
-      select.innerHTML = '';
-      accounts.sort((a, b) => Number(b.isVirtual) - Number(a.isVirtual));
-
-      accounts.forEach((acc, idx) => {
-        const opt = document.createElement('option');
-        opt.value = idx;
-        opt.text = `${acc.acct} (${acc.isVirtual ? 'DEMO' : 'REAL'} - ${acc.cur})`;
-        select.appendChild(opt);
-      });
-
-      select.disabled = false;
-      document.getElementById('btnLoginDeriv').style.display = 'none';
-      document.getElementById('btnLogout').style.display = 'inline-block';
-      onAccountChange();
-    }
-
-    function onAccountChange() {
-      if (isRunning) {
-        alert('Pare o robô antes de trocar de conta.');
-        return;
-      }
-      const idx = document.getElementById('accountSelect').value;
-      currentAccount = accounts[idx];
-      if (!currentAccount) return;
-      connectSocketWithToken(currentAccount.token);
-    }
-
-    function connectManualToken() {
-      const token = document.getElementById('manualToken').value.trim();
-      if (!token) return alert('Cole o token manual.');
-      connectSocketWithToken(token);
-    }
-
-    function connectSocketWithToken(token) {
-      const appId = document.getElementById('appId').value.trim() || '1089';
-
-      if (ws) ws.close();
-      ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${appId}`);
-
-      ws.onopen = () => {
-        log('Autenticando conta na Deriv...');
-        ws.send(JSON.stringify({ authorize: token }));
-      };
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.error) {
-          log(`Erro API: ${data.error.message}`);
-          inTrade = false;
+      function loginWithDerivNewTab() {
+        if (window.location.protocol === 'file:') {
+          alert('O login OAuth da Deriv exige URL HTTP/HTTPS (como GitHub Pages) cadastrada em developers.deriv.com.');
           return;
         }
 
-        if (data.msg_type === 'authorize') {
-          const auth = data.authorize;
-          const isVirtual = Boolean(auth.is_virtual);
-          currentAccount = { acct: auth.loginid, token, cur: auth.currency, isVirtual };
-
-          document.getElementById('accountInfo').innerText = `Conectado: ${auth.loginid}`;
-          document.getElementById('balanceDisplay').innerText = `${Number(auth.balance).toFixed(2)} ${auth.currency}`;
-          document.getElementById('realWarning').style.display = isVirtual ? 'none' : 'block';
-
-          const badgeBox = document.getElementById('accountBadgeBox');
-          badgeBox.innerHTML = isVirtual
-            ? '<span class="badge badge-demo">AMBIENTE SEGURO: CONTA DEMO</span>'
-            : '<span class="badge badge-real">ATENÇÃO: CONTA REAL</span>';
-
-          const btnStart = document.getElementById('btnStart');
-          btnStart.disabled = false;
-          btnStart.className = 'btn btn-start' + (isVirtual ? '' : ' real');
-          btnStart.innerText = isVirtual ? 'Iniciar Robô (DEMO)' : 'Iniciar Robô (CONTA REAL)';
-
-          log(`Conta ${auth.loginid} [${isVirtual ? 'DEMO' : 'REAL'}] pronta para operar.`);
-          ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+        const appId = document.getElementById('appId').value.trim();
+        if (!appId) {
+          alert('Informe o seu App ID numérico registrado em developers.deriv.com.');
+          return;
         }
 
-        if (data.msg_type === 'balance') {
-          document.getElementById('balanceDisplay').innerText = `${Number(data.balance.balance).toFixed(2)} ${data.balance.currency}`;
+        localStorage.setItem('deriv_custom_app_id', appId);
+        const oauthUrl = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(appId)}&l=PT&brand=deriv`;
+        const newTab = window.open(oauthUrl, '_blank');
+
+        if (!newTab) {
+          alert('O navegador bloqueou a abertura da nova aba. Permita popups/novas abas para este site.');
+        } else {
+          log('Nova aba aberta para login na Deriv. Conclua a autorização lá...');
         }
-
-        if (data.msg_type === 'tick' && isRunning && !inTrade) {
-          const quote = Number(data.tick.quote);
-          lastTicks.push(quote);
-          if (lastTicks.length > 4) lastTicks.shift();
-
-          if (lastTicks.length === 4) {
-            const up3 = lastTicks[3] > lastTicks[2] && lastTicks[2] > lastTicks[1] && lastTicks[1] > lastTicks[0];
-            const down3 = lastTicks[3] < lastTicks[2] && lastTicks[2] < lastTicks[1] && lastTicks[1] < lastTicks[0];
-            if (up3) placeOrder('CALL');
-            else if (down3) placeOrder('PUT');
-          }
-        }
-
-        if (data.msg_type === 'buy') {
-          const contractId = data.buy.contract_id;
-          log(`Ordem aberta (#${contractId}) | Stake: ${stats.nextStake.toFixed(2)} USD`);
-          ws.send(JSON.stringify({ proposal_open_contract: 1, contract_id: contractId, subscribe: 1 }));
-        }
-
-        if (data.msg_type === 'proposal_open_contract') {
-          const poc = data.proposal_open_contract;
-          if (poc.is_sold) {
-            ws.send(JSON.stringify({ forget: poc.id }));
-            handleContractResult(poc);
-          }
-        }
-      };
-    }
-
-    function logoutDeriv() {
-      stopBot('Logout realizado.');
-      sessionStorage.removeItem('deriv_oauth_accounts');
-      accounts = [];
-      currentAccount = null;
-      if (ws) ws.close();
-      location.reload();
-    }
-
-    function startBot() {
-      if (!ws || ws.readyState !== WebSocket.OPEN || !currentAccount) return;
-      if (!currentAccount.isVirtual) {
-        const ok = confirm(`CONFIRMAÇÃO DE CONTA REAL (${currentAccount.acct}):\nDeseja realmente operar saldo real agora?`);
-        if (!ok) return;
       }
 
-      const base = Number(document.getElementById('baseStake').value);
-      stats = { total: 0, wins: 0, losses: 0, pnl: 0, lossStreak: 0, sorosLevel: 0, nextStake: base };
-      lastTicks = [];
-      updateStatsUI();
-
-      isRunning = true;
-      inTrade = false;
-      document.getElementById('btnStart').disabled = true;
-      document.getElementById('btnStop').disabled = false;
-
-      const symbol = document.getElementById('symbol').value;
-      ws.send(JSON.stringify({ forget_all: 'ticks' }));
-      ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
-      log(`Robô iniciado em ${symbol} (${currentAccount.isVirtual ? 'DEMO' : 'REAL'}).`);
-    }
-
-    function stopBot(reason) {
-      isRunning = false;
-      inTrade = false;
-      clearTimeout(cooldownTimer);
-      if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ forget_all: 'ticks' }));
-      if (currentAccount) document.getElementById('btnStart').disabled = false;
-      document.getElementById('btnStop').disabled = true;
-      log(`Sessão parada: ${reason}`);
-    }
-
-    function placeOrder(contractType) {
-      inTrade = true;
-      ws.send(JSON.stringify({
-        buy: 1,
-        price: Number(stats.nextStake.toFixed(2)),
-        parameters: {
-          amount: Number(stats.nextStake.toFixed(2)),
-          basis: 'stake',
-          contract_type: contractType,
-          currency: currentAccount.cur || 'USD',
-          duration: Number(document.getElementById('ticks').value),
-          duration_unit: 't',
-          symbol: document.getElementById('symbol').value
+      authChannel.onmessage = (event) => {
+        if (event.data && event.data.type === 'DERIV_OAUTH_SUCCESS') {
+          applyReceivedAccounts(event.data.accounts);
         }
-      }));
-    }
+      };
 
-    function handleContractResult(poc) {
-      const profit = Number(poc.profit);
-      const baseStake = Number(document.getElementById('baseStake').value);
-      const mgmt = document.getElementById('moneyMgmt').value;
-      const tp = Number(document.getElementById('takeProfit').value);
-      const sl = Number(document.getElementById('stopLoss').value);
-      const maxStreak = Number(document.getElementById('maxLossStreak').value);
-      const cooldown = Number(document.getElementById('cooldownSec').value) * 1000;
+      window.addEventListener('message', (event) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data && event.data.type === 'DERIV_OAUTH_SUCCESS') {
+          applyReceivedAccounts(event.data.accounts);
+        }
+      });
+
+      function handleOAuthReturn() {
+        const savedAppId = localStorage.getItem('deriv_custom_app_id');
+        if (savedAppId) document.getElementById('appId').value = savedAppId;
+
+        const params = new URLSearchParams(window.location.search);
+        const parsed = [];
+        let i = 1;
+        while (params.has(`acct${i}`) && params.has(`token${i}`)) {
+          const acct = params.get(`acct${i}`);
+          const token = params.get(`token${i}`);
+          const cur = params.get(`cur${i}`) || 'USD';
+          const isVirtual = acct.startsWith('VRT');
+          parsed.push({ acct, token, cur, isVirtual });
+          i++;
+        }
+
+        if (parsed.length > 0) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+          authChannel.postMessage({ type: 'DERIV_OAUTH_SUCCESS', accounts: parsed });
+          if (window.opener && !window.opener.closed) {
+            window.opener.postMessage({ type: 'DERIV_OAUTH_SUCCESS', accounts: parsed }, window.location.origin);
+          }
+          sessionStorage.setItem('deriv_oauth_accounts', JSON.stringify(parsed));
+
+          setTimeout(() => {
+            window.close();
+            document.getElementById('oauthDoneBanner').style.display = 'block';
+          }, 250);
+          return;
+        }
+
+        const stored = sessionStorage.getItem('deriv_oauth_accounts');
+        if (stored) {
+          accounts = JSON.parse(stored);
+          populateAccountSelector();
+        }
+      }
+
+      function populateAccountSelector() {
+        const select = document.getElementById('accountSelect');
+        select.innerHTML = '';
+        accounts.sort((a, b) => Number(b.isVirtual) - Number(a.isVirtual));
+
+        accounts.forEach((acc, idx) => {
+          const opt = document.createElement('option');
+          opt.value = idx;
+          opt.text = `${acc.acct} (${acc.isVirtual ? 'DEMO' : 'REAL'} - ${acc.cur})`;
+          select.appendChild(opt);
+        });
+
+        select.disabled = false;
+        document.getElementById('btnLoginDeriv').style.display = 'none';
+        document.getElementById('btnLogout').style.display = 'inline-block';
+        onAccountChange();
+      }
+
+      function onAccountChange() {
+        if (isRunning) {
+          alert('Pare o robô antes de trocar de conta.');
+          return;
+        }
+        const idx = document.getElementById('accountSelect').value;
+        currentAccount = accounts[idx];
+        if (!currentAccount) return;
+        connectSocketWithToken(currentAccount.token);
+      }
+
+      function connectManualToken() {
+        const token = document.getElementById('manualToken').value.trim();
+        if (!token) return alert('Cole o token manual.');
+        connectSocketWithToken(token);
+      }
+
+      function connectSocketWithToken(token) {
+        const appId = document.getElementById('appId').value.trim() || '1089';
+
+        if (ws) ws.close();
+        ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${appId}`);
+
+        ws.onopen = () => {
+          log('Autenticando conta na Deriv...');
+          ws.send(JSON.stringify({ authorize: token }));
+        };
+
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (data.error) {
+            log(`Erro API: ${data.error.message}`);
+            inTrade = false;
+            return;
+          }
+
+          if (data.msg_type === 'authorize') {
+            const auth = data.authorize;
+            const isVirtual = Boolean(auth.is_virtual);
+            currentAccount = { acct: auth.loginid, token, cur: auth.currency, isVirtual };
+
+            document.getElementById('accountInfo').innerText = `Conectado: ${auth.loginid}`;
+            document.getElementById('balanceDisplay').innerText = `${Number(auth.balance).toFixed(2)} ${auth.currency}`;
+            document.getElementById('realWarning').style.display = isVirtual ? 'none' : 'block';
+
+            const badgeBox = document.getElementById('accountBadgeBox');
+            badgeBox.innerHTML = isVirtual
+              ? '<span class="badge badge-demo">AMBIENTE SEGURO: CONTA DEMO</span>'
+              : '<span class="badge badge-real">ATENÇÃO: CONTA REAL</span>';
+
+            const btnStart = document.getElementById('btnStart');
+            btnStart.disabled = false;
+            btnStart.className = 'btn btn-start' + (isVirtual ? '' : ' real');
+            btnStart.innerText = isVirtual ? 'Iniciar Robô (DEMO)' : 'Iniciar Robô (CONTA REAL)';
+
+            log(`Conta ${auth.loginid} [${isVirtual ? 'DEMO' : 'REAL'}] pronta para operar.`);
+            ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+          }
+
+          if (data.msg_type === 'balance') {
+            document.getElementById('balanceDisplay').innerText = `${Number(data.balance.balance).toFixed(2)} ${data.balance.currency}`;
+          }
+
+          if (data.msg_type === 'tick' && isRunning && !inTrade) {
+            const quote = Number(data.tick.quote);
+            lastTicks.push(quote);
+            if (lastTicks.length > 4) lastTicks.shift();
+
+            if (lastTicks.length === 4) {
+              const up3 = lastTicks[3] > lastTicks[2] && lastTicks[2] > lastTicks[1] && lastTicks[1] > lastTicks[0];
+              const down3 = lastTicks[3] < lastTicks[2] && lastTicks[2] < lastTicks[1] && lastTicks[1] < lastTicks[0];
+              if (up3) placeOrder('CALL');
+              else if (down3) placeOrder('PUT');
+            }
+          }
+
+          if (data.msg_type === 'buy') {
+            const contractId = data.buy.contract_id;
+            log(`Ordem aberta (#${contractId}) | Stake: ${stats.nextStake.toFixed(2)} USD`);
+            ws.send(JSON.stringify({ proposal_open_contract: 1, contract_id: contractId, subscribe: 1 }));
+          }
+
+          if (data.msg_type === 'proposal_open_contract') {
+            const poc = data.proposal_open_contract;
+            if (poc.is_sold) {
+              ws.send(JSON.stringify({ forget: poc.id }));
+              handleContractResult(poc);
+            }
+          }
+        };
+      }
+
+      function logoutDeriv() {
+        stopBot('Logout realizado.');
+        sessionStorage.removeItem('deriv_oauth_accounts');
+        accounts = [];
+        currentAccount = null;
+        if (ws) ws.close();
+        location.reload();
+      }
+
+      function startBot() {
+        if (!ws || ws.readyState !== WebSocket.OPEN || !currentAccount) return;
+        if (!currentAccount.isVirtual) {
+          const ok = confirm(`CONFIRMAÇÃO DE CONTA REAL (${currentAccount.acct}):\nDeseja realmente operar saldo real agora?`);
+          if (!ok) return;
+        }
+
+        const base = Number(document.getElementById('baseStake').value);
+        stats = { total: 0, wins: 0, losses: 0, pnl: 0, lossStreak: 0, sorosLevel: 0, nextStake: base };
+        lastTicks = [];
+        updateStatsUI();
+
+        isRunning = true;
+        inTrade = false;
+        document.getElementById('btnStart').disabled = true;
+        document.getElementById('btnStop').disabled = false;
+
+        const symbol = document.getElementById('symbol').value;
+        ws.send(JSON.stringify({ forget_all: 'ticks' }));
+        ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
+        log(`Robô iniciado em ${symbol} (${currentAccount.isVirtual ? 'DEMO' : 'REAL'}).`);
+      }
+
+      function stopBot(reason) {
+        isRunning = false;
+        inTrade = false;
+        clearTimeout(cooldownTimer);
+        if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ forget_all: 'ticks' }));
+        if (currentAccount) document.getElementById('btnStart').disabled = false;
+        document.getElementById('btnStop').disabled = true;
+        log(`Sessão parada: ${reason}`);
+      }
+
+      function placeOrder(contractType) {
+        inTrade = true;
+        ws.send(JSON.stringify({
+          buy: 1,
+          price: Number(stats.nextStake.toFixed(2)),
+          parameters: {
+            amount: Number(stats.nextStake.toFixed(2)),
+            basis: 'stake',
+            contract_type: contractType,
+            currency: currentAccount.cur || 'USD',
+            duration: Number(document.getElementById('ticks').value),
+            duration_unit: 't',
+            symbol: document.getElementById('symbol').value
+          }
+        }));
+      }
+
+      function handleContractResult(poc) {
+        const profit = Number(poc.profit);
+        const baseStake = Number(document.getElementById('baseStake').value);
+        const mgmt = document.getElementById('moneyMgmt').value;
+        const tp = Number(document.getElementById('takeProfit').value);
+        const sl = Number(document.getElementById('stopLoss').value);
+        const maxStreak = Number(document.getElementById('maxLossStreak').value);
+        const cooldown = Number(document.getElementById('cooldownSec').value) * 1000;
+
+        stats.total += 1;
+        stats.pnl = Number((stats.pnl + profit).toFixed(2));
+
+        if (profit > 0) {
+          stats.wins += 1;
+          stats.lossStreak = 0;
+          if (mgmt === 'soros1' && stats.sorosLevel === 0) {
+            stats.sorosLevel = 1;
+            stats.nextStake = Number((baseStake + profit).toFixed(2));
+          } else {
+            stats.sorosLevel = 0;
+            stats.nextStake = baseStake;
+          }
+        } else {
+          stats.losses += 1;
+          stats.lossStreak += 1;
+          stats.sorosLevel = 0;
+          stats.nextStake = baseStake;
+        }
+
+        const row = {
+          time: new Date().toLocaleTimeString(),
+          acct: currentAccount.acct,
+          symbol: poc.underlying,
+          type: poc.contract_type,
+          stake: Number(poc.buy_price).toFixed(2),
+          profit: profit.toFixed(2),
+          id: poc.contract_id
+        };
+        historyRows.unshift(row);
+        renderHistoryRow(row);
+        updateStatsUI();
+
+        if (stats.pnl >= tp) return stopBot(`Take Profit atingido (+${stats.pnl.toFixed(2)})!`);
+        if (stats.pnl <= -sl) return stopBot(`Stop Loss atingido (${stats.pnl.toFixed(2)}).`);
+        if (stats.lossStreak >= maxStreak) return stopBot(`Trava de ${maxStreak} perdas seguidas acionada.`);
+
+        log(`Resultado: ${profit >= 0 ? '+' : ''}${profit.toFixed(2)}. Próxima leitura em ${cooldown / 1000}s...`);
+        lastTicks = [];
+        cooldownTimer = setTimeout(() => { inTrade = false; }, cooldown);
+      }
+
+      function updateStatsUI() {
+        document.getElementById('statTotal').innerText = stats.total;
+        document.getElementById('statWL').innerText = `${stats.wins} / ${stats.losses}`;
+        const pnlEl = document.getElementById('statPnl');
+        pnlEl.innerText = `${stats.pnl >= 0 ? '+' : ''}${stats.pnl.toFixed(2)}`;
+        pnlEl.className = stats.pnl >= 0 ? 'pos' : 'neg';
+        document.getElementById('statNextStake').innerText = stats.nextStake.toFixed(2);
+      }
+
+      function renderHistoryRow(r) {
+        const tbody = document.getElementById('historyBody');
+        const tr = document.createElement('tr');
+        const cls = Number(r.profit) >= 0 ? 'pos' : 'neg';
+        tr.innerHTML = `<td>${r.time}</td><td>${r.acct}</td><td>${r.symbol}</td><td>${r.type}</td><td>${r.stake}</td><td class="${cls}">${Number(r.profit) >= 0 ? '+' : ''}${r.profit}</td><td>${r.id}</td>`;
+        tbody.prepend(tr);
+      }
+
+      function exportCSV() {
+        if (!historyRows.length) return;
+        const header = 'Hora,Conta,Ativo,Tipo,Stake,Lucro,Contrato\n';
+        const csv = header + historyRows.map(r => `${r.time},${r.acct},${r.symbol},${r.type},${r.stake},${r.profit},${r.id}`).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `sessao_${currentAccount?.acct || 'deriv'}_${Date.now()}.csv`;
+        link.click();
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('btnLoginDeriv').addEventListener('click', loginWithDerivNewTab);
+        document.getElementById('btnLogout').addEventListener('click', logoutDeriv);
+        document.getElementById('btnManualToken').addEventListener('click', connectManualToken);
+        document.getElementById('accountSelect').addEventListener('change', onAccountChange);
+        document.getElementById('btnStart').addEventListener('click', startBot);
+        document.getElementById('btnStop').addEventListener('click', () => stopBot('Parado manualmente.'));
+        document.getElementById('btnExportCsv').addEventListener('click', exportCSV);
+        handleOAuthReturn();
+      });
+    })();
+  </script>
+</body>
+</html>
